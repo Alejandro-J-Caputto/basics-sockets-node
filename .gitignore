@@ -1,0 +1,6 @@
+/node_modules
+
+/config/.exam.env
+
+/uploads/products/**.*
+/uploads/users/**.*
