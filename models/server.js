@@ -1,4 +1,6 @@
 const express = require('express');
+const server = require('http');
+const socketio = require('socket.io');
 const cors = require('cors')
 const AppError = require('../utils/appError');
 // const fileUpload = require('express-fileupload');
@@ -10,12 +12,17 @@ const AppError = require('../utils/appError');
 // const uploadRouter = require('../routes/uploadsRoutes');
 
 const { dbConnection } = require('../database/config');
+const socketController = require('../socketsControllers/socketController');
 
 class Server {
 
   constructor(){
-    this.app = express();
+    this.app  = express();
     this.port = process.env.PORT;
+    this.portIO = process.env.PORT_IO;
+    this.server = server.createServer(this.app);
+    this.io = socketio(this.server);
+
     // this.pathsEndpoints = {
     //   users:          '/api/v1/users',
     //   authorization:  '/api/v1/auth',
@@ -28,6 +35,8 @@ class Server {
     this.middlewares();
     // this.routes();
     // this.listen();
+    //CONFIGURE SOCKETS
+    this.sockets();
     this.errorHandlingMiddleware();
   }
   middlewares() {
@@ -54,10 +63,22 @@ class Server {
       next(new AppError(`Can't find ${req.originalUrl} on this server`, 404));
     })
   }
+
+  sockets() {
+    //Connect to WebSocket
+    this.io.on('connection', socketController.bind(this.io))
+  }
+
   listen() {
     this.app.listen(this.port, () => {
       console.log(this.port)
       console.log('Server running on port', this.port)
+    })
+  }
+  listenIO() {
+    this.server.listen(this.portIO, () => {
+      console.log(this.portIO)
+      console.log('Server running on port', this.portIO)
     })
   }
   async conectarDB(env) {
